@@ -1,17 +1,16 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <person-input/>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import PersonInput from './components/PersonInput.vue'
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    PersonInput
   }
 }
 </script>
