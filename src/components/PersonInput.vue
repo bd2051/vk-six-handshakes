@@ -9,7 +9,8 @@
       secondID
       <input v-model="myID">
     </label>
-    <button @click="onClickButton">Найти</button>
+    <button @click="onClickFindButton">Найти</button>
+    <button @click="onClickStopButton">Остановить</button>
     <br>
     <br>
     <div>Результат: {{ result }}</div>
@@ -17,36 +18,64 @@
 </template>
 
 <script>
+  import {mapState} from 'vuex';
+
 export default {
   name: 'PersonInput',
   data () {
     return {
-      personID: '',
-      myID: '',
+      DELAY_TIME: 1000,
+      timerID: null,
+      personID: '214439',
+      myID: '54724',
       result: '',
-      version: '4'
+      version: '15'
+    }
+  },
+  computed: {
+    ...mapState(['hand', 'friendsMap', 'usersList', 'hasMatches']),
+  },
+  watch: {
+    hasMatches(val) {
+      if (val) {
+        const vm = this;
+        console.log('hasMatches', val);
+        clearInterval(vm.timerID);
+        vm.result = vm.hand;
+      }
     }
   },
   created () {
-    console.log(this.axios);
+    console.log(this);
   },
   methods: {
-    getFrendList(userID) {
-      return new Promise((resolve, reject) => {
-        console.log(window, window.VK, window.VK);
-        window.VK.api('friends.get', {user_id: userID, v: '5.92'}, (vk_resp) => {
-          if (vk_resp.error) {
-            reject(vk_resp.error)
-          }
-          resolve(vk_resp)
-        })
-      })
+    findHandshake() {
+      console.log('findHandshake');
+      let listSlice = {
+        first: [],
+        second: []
+      };
+      listSlice.first = this.usersList.first.length < 25
+              ? this.usersList.first
+              : this.usersList.first.slice(0, 25);
+      listSlice.second = this.usersList.second.length < 25
+              ? this.usersList.second
+              : this.usersList.second.slice(0, 25);
+      if (listSlice.first.length !== 0) this.$store.dispatch('getFriendsList',{users: listSlice.first, mapCount: 'first' });
+      if (listSlice.second.length !== 0) this.$store.dispatch('getFriendsList', {users: listSlice.second, mapCount: 'second'});
+      if (listSlice.first.length !== 0 || listSlice.second.length !== 0) this.$store.commit('spliceUsersList', {first: listSlice.first.length, second: listSlice.second.length});
     },
-    onClickButton() {
-      this.getFrendList(this.personID).then((response) => {
-        console.log(response);
-        this.result = response
-      })
+    onClickFindButton() {
+      this.friendsMap.first[this.myID] = {parent: null};
+      this.usersList.first.push({id: this.myID, parent: null})
+      this.friendsMap.second[this.personID] = {parent: null};
+      this.usersList.second.push({id: this.personID, parent: null})
+      this.timerID = setInterval(this.findHandshake, this.DELAY_TIME);
+    },
+    onClickStopButton() {
+      const vm = this
+      clearInterval(vm.timerID);
+      vm.result = [vm.friendsMap.first.length, vm.friendsMap.second.length];
     }
   }
 }
