@@ -11,6 +11,7 @@
     </label>
     <button @click="onClickFindButton">Найти</button>
     <button @click="onClickStopButton">Остановить</button>
+    <button @click="showResult">Показать результат</button>
     <br>
     <br>
     <div>Результат: {{ result }}</div>
@@ -28,20 +29,19 @@ export default {
       timerID: null,
       personID: '214439',
       myID: '54724',
-      result: '',
-      version: '15'
+      version: '23'
     }
   },
   computed: {
-    ...mapState(['hand', 'friendsMap', 'usersList', 'hasMatches']),
+    ...mapState(['usersСhains', 'hands', 'friendsMap', 'usersList', 'hasMatches']),
+    result() { return this.usersСhains }
   },
   watch: {
     hasMatches(val) {
       if (val) {
         const vm = this;
-        console.log('hasMatches', val);
+        console.log(val);
         clearInterval(vm.timerID);
-        vm.result = vm.hand;
       }
     }
   },
@@ -50,7 +50,6 @@ export default {
   },
   methods: {
     findHandshake() {
-      console.log('findHandshake');
       let listSlice = {
         first: [],
         second: []
@@ -67,15 +66,18 @@ export default {
     },
     onClickFindButton() {
       this.friendsMap.first[this.myID] = {parent: null};
-      this.usersList.first.push({id: this.myID, parent: null})
+      this.usersList.first.push({id: this.myID, parent: null});
       this.friendsMap.second[this.personID] = {parent: null};
-      this.usersList.second.push({id: this.personID, parent: null})
+      this.usersList.second.push({id: this.personID, parent: null});
       this.timerID = setInterval(this.findHandshake, this.DELAY_TIME);
     },
     onClickStopButton() {
-      const vm = this
+      const vm = this;
       clearInterval(vm.timerID);
       vm.result = [vm.friendsMap.first.length, vm.friendsMap.second.length];
+    },
+    showResult() {
+      this.$store.dispatch('getHandsInformation', this.hands);
     }
   }
 }
