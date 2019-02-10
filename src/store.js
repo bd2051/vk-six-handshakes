@@ -1,85 +1,8 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import {calculateHands, friehndsExecuteCode, sendBatchRequest, usersDetailExecuteCode} from './helpers';
 
 Vue.use(Vuex);
-
-// const executeCode = (usersID, parentID = false) => {
-//   return `var value = ${usersID};` +
-//     ` var parent = ${parentID};` +
-//     ' var users = API.friends.get({"user_id":  value});' +
-//     ' var begin = 1;' +
-//     ' var end;' +
-//     ' if (users.count>=25) {' +
-//     ' end = 25;' +
-//     ' } else { ' +
-//     ' end = users.count;' +
-//     ' }' +
-//     ' var response = [];' +
-//     ' response.push({' +
-//     '  "user":  value,' +
-//     '  "parent": parent,' +
-//     '  "friends": users' +
-//     ' });' +
-//     ' while(begin != end) {' +
-//     ' begin = begin + 1;' +
-//     ' response.push( {' +
-//     '   "user": users.items[begin],' +
-//     '   "parent":  value,' +
-//     '   "friends": API.friends.get({"user_id": users.items[begin]})' +
-//     '   });' +
-//     ' }' +
-//     ' return response ;'
-// }
-
-const friehndsExecuteCode = (users) => {
-  if (users.length > 25) throw 'Больше 25 запросов';
-  let code = 'return {';
-  users.forEach((user) => {
-    code += `"${user.id}": {` +
-      `"id": ${user.id},` +
-      `"parent": ${user.parent},` +
-      `"friends": API.friends.get({"user_id": ${user.id}}),` +
-      '},'
-  });
-  code += '};';
-  return code;
-};
-
-const usersDetailExecuteCode = (hands) => {
-  if (hands.length > 25) throw 'Больше 25 запросов';
-  let code = 'return [';
-  hands.forEach((hand) => {
-    code +=               `{` +
-                          `"user": API.users.get({"user_id": ${hand.id}}),` +
-  /*hand.friends ? '' : */`"friends": API.friends.get({"user_id": ${hand.id}}).count,` +
-                          '},'
-  });
-  code += '];';
-  console.log(code);
-  return code;
-};
-
-const sendBatchRequest = (executeCode) => {
-  return new Promise((resolve, reject) => {
-    window.VK.api('execute', {code: executeCode}, (vk_resp) => {
-      if (vk_resp.error) {
-        reject(vk_resp.error)
-      }
-      if (vk_resp.execute_errors) console.warn('vk_resp.execute_errors');
-      resolve(vk_resp.response)
-    })
-  })
-};
-
-const calculateHands = (hand, friendsMapWithType) => {
-  let tempHand = hand;
-  const branch = [];
-  while (friendsMapWithType[tempHand].parent) {
-    branch.push(friendsMapWithType[tempHand].parent);
-    tempHand = friendsMapWithType[tempHand].parent.id;
-  }
-  return branch;
-};
 
 export const store = new Vuex.Store({
   state: {
@@ -93,7 +16,8 @@ export const store = new Vuex.Store({
     },
     hasMatches: false,
     hands: [],
-    usersСhains: []
+    usersСhains: [],
+    hasNotFriends: false
   },
 
   getters: {
@@ -104,20 +28,32 @@ export const store = new Vuex.Store({
       const map = state.friendsMap[mapCount];
       const otherMapCount = mapCount === 'first' ? 'second' : 'first';
       for (const key in friendsMap) {
+        // проверка на наличие друзей у корневых юсеров
+        console.log(key, friendsMap[key].friends);
+        if (!friendsMap[key].parent) {
+          const hasNotFriends = typeof friendsMap[key].friends === "boolean" || friendsMap[key].friends.items.length === 0;
+          state.hasNotFriends = hasNotFriends;
+          state.hasMatches = hasNotFriends;
+        }
+        // проверка на пересечение первой и второй ветви
         if (state.friendsMap[otherMapCount][key]) {
           state.hasMatches = true;
           state.hands.push(key)
         }
+        // проверка на наличие в списке уже заполненого пользователя
         if (!map[key].friens) {
           Vue.set(map, key, friendsMap[key]);
-          Vue.set(map[key], 'parent', map[friendsMap[key].parent])
+          Vue.set(map[key], 'parent', map[friendsMap[key].parent]);
+          // если у пользователя недоступен список друзей выставляем true
           if (!map[key].friends) Vue.set(map[key], 'friends', true);
           else {
             map[key].friends.items.forEach((item) => {
               if (!map[item]) {
                 map[item] = {
+                  id: item,
                   parent: map[key],
                 };
+                // заполняем список уникалбных пользователей для запроса к бд вк
                 state.usersList[mapCount].push({id: item, parent: key});
               }
             })
@@ -142,15 +78,14 @@ export const store = new Vuex.Store({
         const firstHands = calculateHands(hand, state.friendsMap.first).reverse();
         const secondHands = calculateHands(hand, state.friendsMap.second);
         const commonHands = firstHands.concat(state.friendsMap.first[hand], secondHands);
-        sendBatchRequest(usersDetailExecuteCode(commonHands)).then((response) => {
-          console.log(response);
-          commit('setUsersChains', {response: response})
+        sendBatchRequest(usersDetailExecuteCode(commonHands)).then((data) => {
+          commit('setUsersChains', {response: data})
         })
       });
     },
     getFriendsList: ({ commit }, { users: users, mapCount: mapCount }) => {
-      sendBatchRequest(friehndsExecuteCode(users)).then((response) => {
-        commit('setFriendsMap', { response: response, mapCount: mapCount})
+      sendBatchRequest(friehndsExecuteCode(users)).then((data) => {
+        commit('setFriendsMap', { response: data, mapCount: mapCount})
       })
     }
   },

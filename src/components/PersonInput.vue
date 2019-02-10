@@ -1,13 +1,14 @@
 <template>
   <div>
-    v.{{ version }}
+    <div v-if="hasNotFriends">У одного из пользователей нет друзей или они не доступны!</div>
+    v.0.{{ version }};
     <label>
       firstID
-      <input v-model="personID">
+      <input v-model="firstID">
     </label>
     <label>
       secondID
-      <input v-model="myID">
+      <input v-model="secondID">
     </label>
     <button @click="onClickFindButton">Найти</button>
     <button @click="onClickStopButton">Остановить</button>
@@ -27,13 +28,13 @@ export default {
     return {
       DELAY_TIME: 1000,
       timerID: null,
-      personID: '214439',
-      myID: '54724',
-      version: '23'
+      firstID: '214439',
+      secondID: '54724',
+      version: '32',
     }
   },
   computed: {
-    ...mapState(['usersСhains', 'hands', 'friendsMap', 'usersList', 'hasMatches']),
+    ...mapState(['hasNotFriends', 'usersСhains', 'hands', 'friendsMap', 'usersList', 'hasMatches']),
     result() { return this.usersСhains }
   },
   watch: {
@@ -43,7 +44,7 @@ export default {
         console.log(val);
         clearInterval(vm.timerID);
       }
-    }
+    },
   },
   created () {
     console.log(this);
@@ -65,10 +66,10 @@ export default {
       if (listSlice.first.length !== 0 || listSlice.second.length !== 0) this.$store.commit('spliceUsersList', {first: listSlice.first.length, second: listSlice.second.length});
     },
     onClickFindButton() {
-      this.friendsMap.first[this.myID] = {parent: null};
-      this.usersList.first.push({id: this.myID, parent: null});
-      this.friendsMap.second[this.personID] = {parent: null};
-      this.usersList.second.push({id: this.personID, parent: null});
+      this.friendsMap.first[this.firstID] = {parent: null};
+      this.usersList.first.push({id: this.firstID, parent: null});
+      this.friendsMap.second[this.secondID] = {parent: null};
+      this.usersList.second.push({id: this.secondID, parent: null});
       this.timerID = setInterval(this.findHandshake, this.DELAY_TIME);
     },
     onClickStopButton() {
