@@ -4,8 +4,8 @@ import {calculateHands, friehndsExecuteCode, sendBatchRequest, usersDetailExecut
 
 Vue.use(Vuex);
 
-export const store = new Vuex.Store({
-  state: {
+const initState = () => {
+  return {
     friendsMap: {
       first: {},
       second: {}
@@ -18,12 +18,19 @@ export const store = new Vuex.Store({
     hands: [],
     usersСhains: [],
     hasNotFriends: false
-  },
+  }
+}
+
+export const store = new Vuex.Store({
+  state: initState(),
 
   getters: {
   },
 
   mutations: {
+    resetState (state) {
+      Object.assign(state, initState())
+    },
     setFriendsMap: (state, { response: friendsMap, mapCount: mapCount }) => {
       const map = state.friendsMap[mapCount];
       const otherMapCount = mapCount === 'first' ? 'second' : 'first';

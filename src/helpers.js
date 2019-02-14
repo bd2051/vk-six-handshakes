@@ -45,7 +45,7 @@ export const usersDetailExecuteCode = (hands) => {
   let code = 'return [';
   hands.forEach((hand) => {
     code +=               `{` +
-                          `"user": API.users.get({"user_id": ${hand.id}}),` +
+                          `"user": API.users.get({"user_id": ${hand.id},"fields": "photo_200_orig"}),` +
   /*hand.friends ? '' : */`"friends": API.friends.get({"user_id": ${hand.id}}).count,` +
                           '},'
   });
@@ -56,6 +56,7 @@ export const usersDetailExecuteCode = (hands) => {
 export const sendBatchRequest = (executeCode) => {
   return new Promise((resolve) => {
     window.VK.api('execute', {code: executeCode}, (vk_resp) => {
+      console.log(vk_resp);
       resolve(vk_resp.response)
     })
   })

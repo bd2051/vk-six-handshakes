@@ -1,21 +1,59 @@
 <template>
   <div>
-    <div v-if="hasNotFriends">У одного из пользователей нет друзей или они не доступны!</div>
-    v.0.{{ version }};
-    <label>
-      firstID
-      <input v-model="firstID">
-    </label>
-    <label>
-      secondID
-      <input v-model="secondID">
-    </label>
-    <button @click="onClickFindButton">Найти</button>
-    <button @click="onClickStopButton">Остановить</button>
-    <button @click="showResult">Показать результат</button>
-    <br>
-    <br>
-    <div>Результат: {{ result }}</div>
+    <b-input-group prepend="Пользователи">
+      <b-form-input
+              v-model="firstID"
+              placeholder="Введите ID первого пользователя"
+      ></b-form-input>
+      <b-form-input
+              v-model="secondID"
+              placeholder="Введите ID второго пользователя"
+      ></b-form-input>
+      <b-input-group-append>
+        <b-btn
+                variant="outline-success"
+                @click="onClickFindButton"
+        >
+          Найти
+        </b-btn>
+      </b-input-group-append>
+    </b-input-group>
+    <div v-if="!hasMatches" class="mt-5 pt-5 d-flex justify-content-around align-items-center">
+      <b-img
+              src="https://vk.com/images/camera_200.png"
+              rounded="circle"
+              width="200"
+              height="200"
+              alt="img"
+              class="m-1"
+      />
+            <b-img
+              src="https://vk.com/images/camera_200.png"
+              rounded="circle"
+              width="200"
+              height="200"
+              alt="img"
+              class="m-1"
+      />
+    </div>
+    <div v-else class="mt-5 d-flex justify-content-around align-items-center">
+      <b-img
+              v-for="user in result"
+              :key="user.user[0].id"
+              :src="user.user[0].photo_200_orig"
+              rounded="circle"
+              width="100"
+              height="100"
+              alt="img"
+              class="m-1"
+      />
+    </div>
+    <span class="fixed-bottom text-right">v.0.{{ version }}</span>
+    <div class="fixed-bottom" >
+      <b-alert dismissible variant="danger" :show="hasNotFriends">У одного из пользователей нет друзей или они не доступны!</b-alert>
+      <b-alert variant="info" :show="isLoading && !hasMatches">Идет поиск...</b-alert>
+      <b-alert dismissible variant="success" :show="hasMatches">Цепочка друзей найдена!</b-alert>
+    </div>
   </div>
 </template>
 
@@ -28,14 +66,15 @@ export default {
     return {
       DELAY_TIME: 1000,
       timerID: null,
-      firstID: '214439',
-      secondID: '54724',
-      version: '32',
+      firstID: '2144393',
+      secondID: '1547234',
+      version: '38',
+      isLoading: false,
     }
   },
   computed: {
     ...mapState(['hasNotFriends', 'usersСhains', 'hands', 'friendsMap', 'usersList', 'hasMatches']),
-    result() { return this.usersСhains }
+    result() { console.log(this.usersСhains); return this.usersСhains[0] ? this.usersСhains[0].response : [] }
   },
   watch: {
     hasMatches(val) {
@@ -43,6 +82,7 @@ export default {
         const vm = this;
         console.log(val);
         clearInterval(vm.timerID);
+        setTimeout(this.showResult(), this.DELAY_TIME);
       }
     },
   },
@@ -66,19 +106,17 @@ export default {
       if (listSlice.first.length !== 0 || listSlice.second.length !== 0) this.$store.commit('spliceUsersList', {first: listSlice.first.length, second: listSlice.second.length});
     },
     onClickFindButton() {
+      this.$store.commit('resetState');
+      console.log(this.$store.state);
       this.friendsMap.first[this.firstID] = {parent: null};
       this.usersList.first.push({id: this.firstID, parent: null});
       this.friendsMap.second[this.secondID] = {parent: null};
       this.usersList.second.push({id: this.secondID, parent: null});
       this.timerID = setInterval(this.findHandshake, this.DELAY_TIME);
-    },
-    onClickStopButton() {
-      const vm = this;
-      clearInterval(vm.timerID);
-      vm.result = [vm.friendsMap.first.length, vm.friendsMap.second.length];
+      this.isLoading = true
     },
     showResult() {
-      this.$store.dispatch('getHandsInformation', this.hands);
+      this.$store.dispatch('getHandsInformation', this.hands.slice(0,3));
     }
   }
 }
