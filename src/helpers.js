@@ -45,7 +45,7 @@ export const usersDetailExecuteCode = (hands) => {
   let code = 'return [';
   hands.forEach((hand) => {
     code +=               `{` +
-                          `"user": API.users.get({"user_id": ${hand.id},"fields": "photo_200_orig"}),` +
+                          `"user": API.users.get({"user_id": ${hand.id},"fields": "photo_200_orig,photo_200"}),` +
   /*hand.friends ? '' : */`"friends": API.friends.get({"user_id": ${hand.id}}).count,` +
                           '},'
   });

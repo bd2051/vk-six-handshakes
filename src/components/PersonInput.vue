@@ -37,16 +37,24 @@
       />
     </div>
     <div v-else class="mt-5 d-flex justify-content-around align-items-center">
-      <b-img
+      <div
               v-for="user in result"
               :key="user.user[0].id"
-              :src="user.user[0].photo_200_orig"
-              rounded="circle"
-              width="100"
-              height="100"
-              alt="img"
-              class="m-1"
-      />
+              class="rounded"
+      >
+        <a
+           :href="`https://vk.com/id${user.user[0].id}`"
+           target="_blank"
+        >
+          <b-img
+                  :src="user.user[0].photo_200 ? user.user[0].photo_200 : user.user[0].photo_200_orig"
+                  rounded="circle"
+                  :width="180 - result.length * 15"
+                  :height="180 - result.length * 15"
+                  :alt="`${user.user[0].first_name} ${user.user[0].last_name}`"
+          />
+        </a>
+      </div>
     </div>
     <span class="fixed-bottom text-right">v.0.{{ version }}</span>
     <div class="fixed-bottom" >
@@ -68,13 +76,13 @@ export default {
       timerID: null,
       firstID: '2144393',
       secondID: '1547234',
-      version: '41',
+      version: '44',
       isLoading: false,
     }
   },
   computed: {
     ...mapState(['hasNotFriends', 'usersСhains', 'hands', 'friendsMap', 'usersList', 'hasMatches']),
-    result() { console.log(this.usersСhains); return this.usersСhains[0] ? this.usersСhains[0].response : [] },
+    result() { console.log(this.usersСhains); return this.usersСhains[0] ? this.usersСhains[0] : [] },
     showFriendMessage: {
       get() { console.log('hasNotFriends', this.hasNotFriends); return this.hasNotFriends },
       set(bool) { console.log('set', bool); this.$store.commit('setHasNotFriends', bool)}

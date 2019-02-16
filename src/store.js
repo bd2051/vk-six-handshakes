@@ -76,7 +76,7 @@ export const store = new Vuex.Store({
       }
     },
     setUsersChains(state, chain) {
-      state.usersСhains.push(chain);
+      state.usersСhains.push(chain.response);
       console.log(state.usersСhains);
     },
     setHasNotFriends(state, bool) {
