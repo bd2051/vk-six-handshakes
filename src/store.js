@@ -14,10 +14,10 @@ const initState = () => {
       first: [],
       second: []
     },
-    hasMatches: false,
     hands: [],
     usersСhains: [],
-    hasNotFriends: false
+    hasNotFriends: false,
+    hasMatches: false,
   }
 }
 
@@ -39,8 +39,10 @@ export const store = new Vuex.Store({
         console.log(key, friendsMap[key].friends);
         if (!friendsMap[key].parent) {
           const hasNotFriends = typeof friendsMap[key].friends === "boolean" || friendsMap[key].friends.items.length === 0;
-          state.hasNotFriends = hasNotFriends;
-          state.hasMatches = hasNotFriends;
+          if (hasNotFriends) {
+            state.hasNotFriends = true;
+            state.hasMatches = true;
+          }
         }
         // проверка на пересечение первой и второй ветви
         if (state.friendsMap[otherMapCount][key]) {
@@ -77,6 +79,12 @@ export const store = new Vuex.Store({
       state.usersСhains.push(chain);
       console.log(state.usersСhains);
     },
+    setHasNotFriends(state, bool) {
+      state.hasNotFriends = bool
+    },
+    setHasMathes(state, bool) {
+      state.hasMatches = bool
+    }
   },
 
   actions: {

@@ -50,9 +50,9 @@
     </div>
     <span class="fixed-bottom text-right">v.0.{{ version }}</span>
     <div class="fixed-bottom" >
-      <b-alert dismissible variant="danger" :show="hasNotFriends">У одного из пользователей нет друзей или они не доступны!</b-alert>
-      <b-alert variant="info" :show="isLoading && !hasMatches">Идет поиск...</b-alert>
-      <b-alert dismissible variant="success" :show="hasMatches">Цепочка друзей найдена!</b-alert>
+      <b-alert dismissible variant="danger" :show="showFriendMessage">У одного из пользователей нет друзей или они не доступны!</b-alert>
+      <b-alert variant="info" :show="isLoading">Идет поиск...</b-alert>
+      <b-alert dismissible variant="success" :show="hasMatches && !hasNotFriends">Цепочка друзей найдена!</b-alert>
     </div>
   </div>
 </template>
@@ -68,13 +68,21 @@ export default {
       timerID: null,
       firstID: '2144393',
       secondID: '1547234',
-      version: '38',
+      version: '41',
       isLoading: false,
     }
   },
   computed: {
     ...mapState(['hasNotFriends', 'usersСhains', 'hands', 'friendsMap', 'usersList', 'hasMatches']),
-    result() { console.log(this.usersСhains); return this.usersСhains[0] ? this.usersСhains[0].response : [] }
+    result() { console.log(this.usersСhains); return this.usersСhains[0] ? this.usersСhains[0].response : [] },
+    showFriendMessage: {
+      get() { console.log('hasNotFriends', this.hasNotFriends); return this.hasNotFriends },
+      set(bool) { console.log('set', bool); this.$store.commit('setHasNotFriends', bool)}
+    },
+    showChainMessage: {
+      get() { return this.hasMatches && !this.hasNotFriends},
+      set(bool) { this.$store.commit('setHasMatches', bool) }
+    }
   },
   watch: {
     hasMatches(val) {
@@ -82,7 +90,8 @@ export default {
         const vm = this;
         console.log(val);
         clearInterval(vm.timerID);
-        setTimeout(this.showResult(), this.DELAY_TIME);
+        this.isLoading = false
+        this.showResult()
       }
     },
   },
@@ -107,7 +116,6 @@ export default {
     },
     onClickFindButton() {
       this.$store.commit('resetState');
-      console.log(this.$store.state);
       this.friendsMap.first[this.firstID] = {parent: null};
       this.usersList.first.push({id: this.firstID, parent: null});
       this.friendsMap.second[this.secondID] = {parent: null};
@@ -116,7 +124,7 @@ export default {
       this.isLoading = true
     },
     showResult() {
-      this.$store.dispatch('getHandsInformation', this.hands.slice(0,3));
+      this.$store.dispatch('getHandsInformation', this.hands.slice(0,2));
     }
   }
 }
