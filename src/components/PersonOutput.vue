@@ -117,7 +117,7 @@ export default {
       showInputError: false,
       dataError: '',
       chainsIndex: 0,
-      version: '53',
+      version: '55',
     }
   },
   computed: {

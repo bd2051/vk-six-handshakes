@@ -30,6 +30,17 @@ export default {
       secondLink: ''
     }
   },
+  created() {
+    sendBatchRequest('return [{"user": API.users.get({"fields": "photo_200_orig,photo_200"}),},];').then((response) => {
+      try {
+        this.$emit('sendUsersData', {firstUser: response[0].user[0], secondUser: {}});
+        this.firstLink = `https://vk.com/id${response[0].user[0].id}`;
+      }
+      catch (e) {
+        console.warn('owner person input', e);
+      }
+    })
+  },
   methods: {
     onClickAddButton() {
       if (this.firstLink.length === 0 || this.secondLink.length === 0) this.$emit('errorInput');
