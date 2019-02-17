@@ -1,144 +1,59 @@
 <template>
-  <div>
-    <b-input-group prepend="Пользователи">
-      <b-form-input
-              v-model="firstID"
-              placeholder="Введите ID первого пользователя"
-      ></b-form-input>
-      <b-form-input
-              v-model="secondID"
-              placeholder="Введите ID второго пользователя"
-      ></b-form-input>
-      <b-input-group-append>
-        <b-btn
-                variant="outline-success"
-                @click="onClickFindButton"
-        >
-          Найти
-        </b-btn>
-      </b-input-group-append>
-    </b-input-group>
-    <div v-if="!hasMatches" class="mt-5 pt-5 d-flex justify-content-around align-items-center">
-      <b-img
-              src="https://vk.com/images/camera_200.png"
-              rounded="circle"
-              width="200"
-              height="200"
-              alt="img"
-              class="m-1"
-      />
-            <b-img
-              src="https://vk.com/images/camera_200.png"
-              rounded="circle"
-              width="200"
-              height="200"
-              alt="img"
-              class="m-1"
-      />
-    </div>
-    <div v-else class="mt-5 d-flex justify-content-around align-items-center">
-      <div
-              v-for="user in result"
-              :key="user.user[0].id"
-              class="rounded"
+  <b-input-group prepend="Пользователи">
+    <b-form-input
+        v-model="firstLink"
+        placeholder="Введите ссылку на пользователя"
+    ></b-form-input>
+    <b-form-input
+        v-model="secondLink"
+        placeholder="Введите ссылку на пользователя"
+    ></b-form-input>
+    <b-input-group-append>
+      <b-btn
+          variant="outline-success"
+          @click="onClickAddButton"
       >
-        <a
-           :href="`https://vk.com/id${user.user[0].id}`"
-           target="_blank"
-        >
-          <b-img
-                  :src="user.user[0].photo_200 ? user.user[0].photo_200 : user.user[0].photo_200_orig"
-                  rounded="circle"
-                  :width="180 - result.length * 15"
-                  :height="180 - result.length * 15"
-                  :alt="`${user.user[0].first_name} ${user.user[0].last_name}`"
-          />
-        </a>
-      </div>
-    </div>
-    <span class="fixed-bottom text-right">v.0.{{ version }}</span>
-    <div class="fixed-bottom" >
-      <b-alert dismissible variant="danger" :show="showFriendMessage">У одного из пользователей нет друзей или они не доступны!</b-alert>
-      <b-alert variant="info" :show="isLoading">Идет поиск...</b-alert>
-      <b-alert dismissible variant="success" :show="hasMatches && !hasNotFriends">Цепочка друзей найдена!</b-alert>
-    </div>
-  </div>
+        Добавить
+      </b-btn>
+    </b-input-group-append>
+  </b-input-group>
 </template>
 
 <script>
-  import {mapState} from 'vuex';
+  import {firstSecondNameExecuteCode, sendBatchRequest} from '../helpers';
 
 export default {
   name: 'PersonInput',
-  data () {
+  data() {
     return {
-      DELAY_TIME: 1000,
-      timerID: null,
-      firstID: '2144393',
-      secondID: '1547234',
-      version: '44',
-      isLoading: false,
+      firstLink: '',
+      secondLink: ''
     }
-  },
-  computed: {
-    ...mapState(['hasNotFriends', 'usersСhains', 'hands', 'friendsMap', 'usersList', 'hasMatches']),
-    result() { console.log(this.usersСhains); return this.usersСhains[0] ? this.usersСhains[0] : [] },
-    showFriendMessage: {
-      get() { console.log('hasNotFriends', this.hasNotFriends); return this.hasNotFriends },
-      set(bool) { console.log('set', bool); this.$store.commit('setHasNotFriends', bool)}
-    },
-    showChainMessage: {
-      get() { return this.hasMatches && !this.hasNotFriends},
-      set(bool) { this.$store.commit('setHasMatches', bool) }
-    }
-  },
-  watch: {
-    hasMatches(val) {
-      if (val) {
-        const vm = this;
-        console.log(val);
-        clearInterval(vm.timerID);
-        this.isLoading = false
-        this.showResult()
-      }
-    },
-  },
-  created () {
-    console.log(this);
   },
   methods: {
-    findHandshake() {
-      let listSlice = {
-        first: [],
-        second: []
-      };
-      listSlice.first = this.usersList.first.length < 25
-              ? this.usersList.first
-              : this.usersList.first.slice(0, 25);
-      listSlice.second = this.usersList.second.length < 25
-              ? this.usersList.second
-              : this.usersList.second.slice(0, 25);
-      if (listSlice.first.length !== 0) this.$store.dispatch('getFriendsList',{users: listSlice.first, mapCount: 'first' });
-      if (listSlice.second.length !== 0) this.$store.dispatch('getFriendsList', {users: listSlice.second, mapCount: 'second'});
-      if (listSlice.first.length !== 0 || listSlice.second.length !== 0) this.$store.commit('spliceUsersList', {first: listSlice.first.length, second: listSlice.second.length});
+    onClickAddButton() {
+      if (this.firstLink.length === 0 || this.secondLink.length === 0) this.$emit('errorInput');
+      else {
+        const firstId = this.replaceLink(this.firstLink);
+        const secondId = this.replaceLink(this.secondLink);
+        console.log([{id: firstId}, {id: secondId}], firstSecondNameExecuteCode([firstId, secondId]));
+        sendBatchRequest(firstSecondNameExecuteCode([{id: firstId}, {id: secondId}])).then((response) => {
+          let firstUser, secondUser;
+          if (response[0].user) firstUser = response[0].user[0];
+          else this.$emit('errorData', firstId);
+          if (response[1].user) secondUser = response[1].user[0];
+          else this.$emit('errorData', secondId);
+          if (Boolean(firstUser) && Boolean(secondUser)) this.$emit('sendUsersData', {firstUser: firstUser, secondUser: secondUser});
+        })
+      }
     },
-    onClickFindButton() {
-      this.$store.commit('resetState');
-      this.friendsMap.first[this.firstID] = {parent: null};
-      this.usersList.first.push({id: this.firstID, parent: null});
-      this.friendsMap.second[this.secondID] = {parent: null};
-      this.usersList.second.push({id: this.secondID, parent: null});
-      this.timerID = setInterval(this.findHandshake, this.DELAY_TIME);
-      this.isLoading = true
-    },
-    showResult() {
-      this.$store.dispatch('getHandsInformation', this.hands.slice(0,2));
+    replaceLink(str) {
+      return str.replace(/^https:\/\//, '').replace(/^vk.com\//, '').replace(/^id(?=\d+)/, '');
     }
   }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 
 </style>

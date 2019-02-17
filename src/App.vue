@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-    <person-input/>
+    <person-output/>
   </div>
 </template>
 
 <script>
-import PersonInput from './components/PersonInput.vue'
+import PersonOutput from './components/PersonOutput.vue'
 
 export default {
   name: 'app',
   components: {
-    PersonInput
+    PersonOutput
   }
 }
 </script>

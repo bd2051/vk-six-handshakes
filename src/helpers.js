@@ -53,6 +53,17 @@ export const usersDetailExecuteCode = (hands) => {
   return code;
 };
 
+export const firstSecondNameExecuteCode = (users) => {
+  let code = 'return [';
+  users.forEach((user) => {
+    code +=               `{` +
+                          `"user": API.users.get({"user_ids": "${user.id}","fields": "photo_200_orig,photo_200"}),` +
+                          '},'
+  });
+  code += '];';
+  return code;
+};
+
 export const sendBatchRequest = (executeCode) => {
   return new Promise((resolve) => {
     window.VK.api('execute', {code: executeCode}, (vk_resp) => {
