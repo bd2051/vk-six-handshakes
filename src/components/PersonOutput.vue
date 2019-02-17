@@ -21,13 +21,17 @@
           />
         </a>
       </div>
-      <b-btn
-          :disabled="!firstUser.id||!secondUser.id"
-          variant="outline-success"
-          @click="onClickFindButton"
-      >
-        Найти
-      </b-btn>
+      <div style="width: 75px" class="text-center">
+        <b-spinner v-if="isLoading" variant="success" label="Spinning" />
+        <b-btn
+            v-else
+            :disabled="!firstUser.id||!secondUser.id"
+            variant="outline-success"
+            @click="onClickFindButton"
+        >
+          Найти
+        </b-btn>
+      </div>
       <div class="rounded">
         <a
               :href="secondUser.id ? `https://vk.com/id${secondUser.id}` : ''"
@@ -113,7 +117,7 @@ export default {
       showInputError: false,
       dataError: '',
       chainsIndex: 0,
-      version: '51',
+      version: '53',
     }
   },
   computed: {
