@@ -47,7 +47,6 @@ export default {
       else {
         const firstId = this.replaceLink(this.firstLink);
         const secondId = this.replaceLink(this.secondLink);
-        console.log([{id: firstId}, {id: secondId}], firstSecondNameExecuteCode([firstId, secondId]));
         sendBatchRequest(firstSecondNameExecuteCode([{id: firstId}, {id: secondId}])).then((response) => {
           let firstUser, secondUser;
           if (response[0].user) firstUser = response[0].user[0];

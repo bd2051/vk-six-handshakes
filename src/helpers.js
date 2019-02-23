@@ -67,7 +67,6 @@ export const firstSecondNameExecuteCode = (users) => {
 export const sendBatchRequest = (executeCode) => {
   return new Promise((resolve) => {
     window.VK.api('execute', {code: executeCode}, (vk_resp) => {
-      console.log(vk_resp);
       resolve(vk_resp.response)
     })
   })

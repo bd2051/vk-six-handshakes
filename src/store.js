@@ -35,8 +35,7 @@ export const store = new Vuex.Store({
       const map = state.friendsMap[mapCount];
       const otherMapCount = mapCount === 'first' ? 'second' : 'first';
       for (const key in friendsMap) {
-        // проверка на наличие друзей у корневых юсеров
-        console.log(key, friendsMap[key].friends);
+        // проверка на наличие друзей у корневых пользователей
         if (!friendsMap[key].parent) {
           const hasNotFriends = typeof friendsMap[key].friends === "boolean" || friendsMap[key].friends.items.length === 0;
           if (hasNotFriends) {
@@ -77,12 +76,11 @@ export const store = new Vuex.Store({
     },
     setUsersChains(state, chain) {
       state.usersСhains.push(chain.response);
-      console.log(state.usersСhains);
     },
     setHasNotFriends(state, bool) {
       state.hasNotFriends = bool
     },
-    setHasMathes(state, bool) {
+    setHasMatches(state, bool) {
       state.hasMatches = bool
     }
   },

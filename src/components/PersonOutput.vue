@@ -1,31 +1,31 @@
 <template>
   <div>
     <person-input
-        @errorInput="showInputError=true"
-        @errorData="(link) => dataError=link"
+        @errorInput="params.showInputError=true"
+        @errorData="(link) => params.dataError=link"
         @sendUsersData="(users) => getUsersData(users)"
     />
     <div v-if="!showChainMessage" class="mt-5 pt-5 d-flex justify-content-around align-items-center">
       <div class="rounded">
         <a
-              :href="firstUser.id ? `https://vk.com/id${firstUser.id}` : ''"
+              :href="params.firstUser.id ? `https://vk.com/id${params.firstUser.id}` : ''"
               target="_blank"
         >
           <b-img
-              :src="firstUser.photo_200 ? firstUser.photo_200 : firstUser.photo_200_orig ? firstUser.photo_200_orig : 'https://vk.com/images/deactivated_200.png'"
+              :src="firstUserFoto"
               rounded="circle"
               :width="200"
               :height="200"
-              :alt="`${firstUser.first_name} ${firstUser.last_name}`"
+              :alt="`${params.firstUser.first_name} ${params.firstUser.last_name}`"
               class="m-1"
           />
         </a>
       </div>
       <div style="width: 75px" class="text-center">
-        <b-spinner v-if="isLoading" variant="success" label="Spinning" />
+        <b-spinner v-if="params.isLoading" variant="success" label="Spinning" />
         <b-btn
             v-else
-            :disabled="!firstUser.id||!secondUser.id"
+            :disabled="!params.firstUser.id||!params.secondUser.id"
             variant="outline-success"
             @click="onClickFindButton"
         >
@@ -34,15 +34,15 @@
       </div>
       <div class="rounded">
         <a
-              :href="secondUser.id ? `https://vk.com/id${secondUser.id}` : ''"
+              :href="params.secondUser.id ? `https://vk.com/id${params.secondUser.id}` : ''"
               target="_blank"
         >
           <b-img
-              :src="secondUser.photo_200 ? secondUser.photo_200 : secondUser.photo_200_orig ? secondUser.photo_200_orig : 'https://vk.com/images/deactivated_200.png'"
+              :src="secondUserFoto"
               rounded="circle"
               :width="200"
               :height="200"
-              :alt="`${secondUser.first_name} ${secondUser.last_name}`"
+              :alt="`${params.secondUser.first_name} ${params.secondUser.last_name}`"
               class="m-1"
           />
         </a>
@@ -74,16 +74,16 @@
       </div>
       <div class="d-flex justify-content-between">
           <b-button
-              :disabled="chainsIndex===0"
+              :disabled="params.chainsIndex===0"
               variant="success"
-              @click="chainsIndex--"
+              @click="params.chainsIndex--"
           >
             Назад
           </b-button>
           <b-button
-              :disabled="chainsIndex===(usersСhains.length-1)"
+              :disabled="params.chainsIndex===(usersСhains.length-1)"
               variant="success"
-              @click="chainsIndex++"
+              @click="params.chainsIndex++"
           >
             Далее
         </b-button>
@@ -91,10 +91,11 @@
     </div>
     <span class="fixed-bottom text-right">v.0.{{ version }}</span>
     <div class="fixed-bottom" >
-      <b-alert dismissible variant="danger" :show="dataError.length > 0">Пользователя {{ dataError }} не существует!</b-alert>
-      <b-alert dismissible variant="danger" :show="showInputError">Сперва введите ссылки на страницы пользователей!</b-alert>
+      <b-alert dismissible variant="danger" :show="isLimetedFriends">Один из пользователей ограничил себя узким кругом друзей!</b-alert>
+      <b-alert dismissible variant="danger" :show="params.dataError.length > 0">Пользователя {{ params.dataError }} не существует!</b-alert>
+      <b-alert dismissible variant="danger" :show="params.showInputError">Сперва введите ссылки на страницы пользователей!</b-alert>
       <b-alert dismissible variant="danger" :show="showFriendMessage">У одного из пользователей нет друзей или они не доступны!</b-alert>
-      <b-alert variant="info" :show="isLoading">Идет поиск...</b-alert>
+      <b-alert variant="info" :show="params.isLoading">Идет поиск...</b-alert>
       <b-alert dismissible variant="success" :show="showChainMessage">Цепочка друзей найдена!</b-alert>
     </div>
   </div>
@@ -110,42 +111,68 @@ export default {
   data () {
     return {
       DELAY_TIME: 1000,
-      timerID: null,
-      firstUser: {},
-      secondUser: {},
-      isLoading: false,
-      showInputError: false,
-      dataError: '',
-      chainsIndex: 0,
-      version: '55',
+      version: '59',
+      params: {
+        timerID: null,
+        firstUser: {},
+        secondUser: {},
+        isLoading: false,
+        showInputError: false,
+        dataError: '',
+        chainsIndex: 0,
+        counterLimetedFriends: 0,
+      },
+      paramsCopy: {}
     }
   },
   computed: {
     ...mapState(['hasNotFriends', 'usersСhains', 'hands', 'friendsMap', 'usersList', 'hasMatches']),
-    result() { console.log(this.usersСhains); return this.usersСhains[this.chainsIndex] ? this.usersСhains[this.chainsIndex] : [] },
+    result() { return this.usersСhains[this.params.chainsIndex] ? this.usersСhains[this.params.chainsIndex] : [] },
     showFriendMessage: {
-      get() { console.log('hasNotFriends', this.hasNotFriends); return this.hasNotFriends },
-      set(bool) { console.log('set', bool); this.$store.commit('setHasNotFriends', bool)}
+      get() { return this.hasNotFriends },
+      set(bool) { this.$store.commit('setHasNotFriends', bool)}
     },
     showChainMessage: {
-      get() { return this.hasMatches && !this.hasNotFriends},
+      get() { return this.hasMatches && !this.hasNotFriends && !this.isLimetedFriends},
       set(bool) { this.$store.commit('setHasMatches', bool) }
+    },
+    isLimetedFriends() {
+      if (this.params.counterLimetedFriends > 4) {
+        this.$store.commit('setHasMatches', true);
+        console.log(this.params.counterLimetedFriends > 4);
+        return true
+      }
+      return false
+    },
+    firstUserFoto() {
+      return this.params.firstUser.photo_200
+        ? this.params.firstUser.photo_200
+        : this.params.firstUser.photo_200_orig
+          ? this.params.firstUser.photo_200_orig
+          : 'https://vk.com/images/deactivated_200.png'
+    },
+    secondUserFoto() {
+      return this.params.secondUser.photo_200
+        ? this.params.secondUser.photo_200
+        : this.params.secondUser.photo_200_orig
+          ? this.params.secondUser.photo_200_orig
+          : 'https://vk.com/images/deactivated_200.png'
     }
   },
   watch: {
     hasMatches(val) {
       if (val) {
         const vm = this;
-        console.log(val);
-        clearInterval(vm.timerID);
-        this.isLoading = false;
-        this.chainsIndex = 0;
+        clearInterval(vm.params.timerID);
+        this.params.isLoading = false;
+        this.params.chainsIndex = 0;
         this.showResult();
       }
     },
   },
   created () {
     console.log(this);
+    this.paramsCopy = Object.assign({}, this.params);
   },
   methods: {
     findHandshake() {
@@ -160,28 +187,29 @@ export default {
               ? this.usersList.second
               : this.usersList.second.slice(0, 25);
       if (listSlice.first.length !== 0) this.$store.dispatch('getFriendsList',{users: listSlice.first, mapCount: 'first' });
+      else this.params.counterLimetedFriends++;
       if (listSlice.second.length !== 0) this.$store.dispatch('getFriendsList', {users: listSlice.second, mapCount: 'second'});
+      else this.params.counterLimetedFriends++;
+      console.log(listSlice.second.length, this.params.counterLimetedFriends);
       if (listSlice.first.length !== 0 || listSlice.second.length !== 0) this.$store.commit('spliceUsersList', {first: listSlice.first.length, second: listSlice.second.length});
     },
     onClickFindButton() {
       this.$store.commit('resetState');
-      this.friendsMap.first[this.firstUser.id] = {parent: null};
-      this.usersList.first.push({id: this.firstUser.id, parent: null});
-      this.friendsMap.second[this.secondUser.id] = {parent: null};
-      this.usersList.second.push({id: this.secondUser.id, parent: null});
-      this.timerID = setInterval(this.findHandshake, this.DELAY_TIME);
-      this.isLoading = true
+      this.friendsMap.first[this.params.firstUser.id] = {parent: null};
+      this.usersList.first.push({id: this.params.firstUser.id, parent: null});
+      this.friendsMap.second[this.params.secondUser.id] = {parent: null};
+      this.usersList.second.push({id: this.params.secondUser.id, parent: null});
+      this.params.timerID = setInterval(this.findHandshake, this.DELAY_TIME);
+      this.params.isLoading = true
     },
     showResult() {
       this.$store.dispatch('getHandsInformation', this.hands.slice(0,2));
     },
     getUsersData(users) {
-      this.isLoading = false;
-      this.showInputError = false;
-      this.dataError = '';
+      this.params = Object.assign({}, this.paramsCopy);
       this.$store.commit('resetState');
-      this.firstUser = users.firstUser;
-      this.secondUser = users.secondUser;
+      this.params.firstUser = users.firstUser;
+      this.params.secondUser = users.secondUser;
     }
   }
 }
