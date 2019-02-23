@@ -6,7 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "dev": "vue-cli-service build --dest ../../message_analizer/static/dev --watch"
+    "dev": "vue-cli-service build --dest ../../sex_handshake/static/dev --watch"
   },
   "dependencies": {
     "axios": "^0.18.0",
