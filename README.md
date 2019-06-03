@@ -1,4 +1,4 @@
-# message_analizer
+# Поиск цепочек друзей в вк
 
 ## Project setup
 ```
